@@ -298,7 +298,7 @@ pub enum Brain {
 }
 /// Model animation family (vanilla `EntityModel.setupAnim` implementations).
 pub use anim::Anim;
-pub use species::Species;
+pub use species::{Species, SpeciesData};
 
 /// Per-type behaviour switches derived from vanilla classes and tags.
 #[derive(Clone, Copy, Debug, Default)]

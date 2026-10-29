@@ -2254,3 +2254,30 @@ mod frog_tests {
         );
     }
 }
+
+#[cfg(test)]
+use super::SpeciesData;
+
+#[cfg(test)]
+mod daylight_burn_tests {
+    use super::*;
+
+    #[test]
+    fn zombie_horse_burns_in_day_while_skeleton_horse_and_horse_do_not() {
+        assert!(
+            SpeciesData::for_species(Species::ZombieHorse)
+                .flags(false)
+                .burns_in_day
+        );
+        assert!(
+            !SpeciesData::for_species(Species::SkeletonHorse)
+                .flags(false)
+                .burns_in_day
+        );
+        assert!(
+            !SpeciesData::for_species(Species::Horse)
+                .flags(false)
+                .burns_in_day
+        );
+    }
+}

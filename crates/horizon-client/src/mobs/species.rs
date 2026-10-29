@@ -1321,10 +1321,16 @@ pub const ALL: &[Def] = &[
         Baby::None
     ),
 ];
+pub type SpeciesData = Def;
+
 pub fn def(s: Species) -> &'static Def {
     ALL.iter().find(|d| d.species == s).unwrap_or(&ALL[0])
 }
 impl Def {
+    pub fn for_species(s: Species) -> &'static Def {
+        def(s)
+    }
+
     /// Model layer families to load for this entity (adult, baby, variants).
     pub fn layer_prefixes(&self) -> Vec<&'static str> {
         let base = self.model.split('#').next().unwrap_or(self.name);
@@ -1481,6 +1487,7 @@ impl Def {
                     | S::Parched
                     | S::Phantom
                     | S::ZombieNautilus
+                    | S::ZombieHorse
             ),
             undead,
             breathes_water: aquatic
