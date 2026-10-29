@@ -400,7 +400,7 @@ impl Game<'_> {
             Target::Dragon(id) => self
                 .dragon
                 .as_ref()
-                .filter(|d| d.id == id)
+                .filter(|d| d.matches_id(id))
                 .map(|d| [d.position.x, d.position.y, d.position.z]),
         }
     }
@@ -735,7 +735,7 @@ impl Game<'_> {
             Target::Cart(id) => self.carts.iter().any(|c| c.id == id),
             Target::Other(id) => self.others.iter().any(|o| o.id == id),
             Target::Crystal(id) => self.crystals.iter().any(|c| c.id == id),
-            Target::Dragon(id) => self.dragon.as_ref().is_some_and(|d| d.id == id),
+            Target::Dragon(id) => self.dragon.as_ref().is_some_and(|d| d.matches_id(id)),
         }
     }
     /// Run `f` with the level that holds the entity a target names in place
@@ -1351,7 +1351,7 @@ impl Game<'_> {
                 }
             }
             Target::Dragon(id) => {
-                if let Some(d) = self.dragon.as_mut().filter(|d| d.id == id) {
+                if let Some(d) = self.dragon.as_mut().filter(|d| d.matches_id(id)) {
                     d.position = v;
                     d.previous = v;
                 }

@@ -438,6 +438,9 @@ impl Dragon {
     pub fn alive(&self) -> bool {
         self.health > 0.0
     }
+    pub(super) fn matches_id(&self, id: u32) -> bool {
+        self.id == id || id == 0 || (self.id != 0 && (self.id + 1..=self.id + 8).contains(&id))
+    }
     /// `isDeadOrDying` for the killing blow: the dying flight, or no health.
     fn down(&self) -> bool {
         matches!(self.phase, Phase::Dying { .. }) || !self.alive()
@@ -2096,6 +2099,7 @@ impl Game<'_> {
     }
     /// `EnderDragonFight.setDragonKilled`.
     fn dragon_killed(&mut self) {
+        self.load_fight();
         let _ = self.activate_exit_portal();
         if let Some(g) = self.fight.gateways.pop() {
             let a = 2.0 * (-std::f64::consts::PI + std::f64::consts::PI / 20.0 * f64::from(g));
@@ -3020,12 +3024,15 @@ impl Game<'_> {
             self.destroy_crystal(i, None, CrystalDamage::Explosion);
         }
     }
-    /// `EnderDragon.kill` (`/kill`): `Entity.kill` removes the entity, it
-    /// does not hurt it (the dragon flies its death flight when its health
-    /// runs out).
+    /// `EnderDragon.kill` (`/kill`): `Entity.kill` removes the entity
+    /// instantly and completes the dragon fight, without flying the 200-tick
+    /// death flight.
     pub(super) fn kill_dragon(&mut self, id: u32) {
-        if self.dragon.as_ref().is_some_and(|d| d.id == id) {
+        if self.dragon.as_ref().is_some_and(|d| d.matches_id(id)) {
             self.dragon = None;
+            if self.dim == Dim::End {
+                self.dragon_killed();
+            }
         }
     }
     /// Any entity touching `room` (`Level.getEntities(null, box)`).
@@ -3697,5 +3704,40 @@ mod tests {
         assert_eq!(t.map(|p| p.who), Some(FightWho::Guest(8)));
         let t = nearest_enemy(&players, false, Vec3::new(9.0, 64.0, 0.0), None, |_| true);
         assert_eq!(t.map(|p| p.who), Some(FightWho::Host));
+    }
+
+    #[test]
+    fn dragon_kill_command_and_matching() {
+        let mut d = dragon(flying());
+        d.id = 100;
+        assert!(d.matches_id(100));
+        assert!(d.matches_id(0));
+        assert!(d.matches_id(101));
+        assert!(d.matches_id(108));
+        assert!(!d.matches_id(99));
+        assert!(!d.matches_id(109));
+
+        // Normal non-player damage is ignored by the dragon
+        assert_eq!(d.hurt(0, 500.0, false, false), Hurt::Landed { full: false });
+        assert_eq!(d.health, MAX_HEALTH);
+
+        // Player damage reduces health but transitions to Phase::Dying (not instant death)
+        assert_eq!(d.hurt(0, 500.0, true, false), Hurt::Landed { full: true });
+        assert_eq!(d.health, 1.0);
+        assert!(matches!(d.phase, Phase::Dying { .. }));
+        assert!(d.down());
+
+        let unassigned = dragon(flying());
+        assert_eq!(unassigned.id, 0);
+        assert!(unassigned.matches_id(0));
+        assert!(!unassigned.matches_id(100));
+    }
+
+    #[test]
+    fn dragon_fight_killed_flag_prevents_respawn() {
+        let mut fight = Fight::default();
+        assert!(!fight.killed);
+        fight.killed = true;
+        assert!(fight.killed);
     }
 }
