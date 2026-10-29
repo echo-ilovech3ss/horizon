@@ -25,7 +25,7 @@ impl Launcher {
     pub(super) fn play_as(&mut self, who: Player) {
         let mut accounts = Accounts::load();
         let done = accounts
-            .play_as(account::store(), who)
+            .play_as_with(account::store(), who, self.settings.dev_offline)
             .and_then(|()| accounts.save());
         match done {
             Ok(()) => self.accounts = accounts,
@@ -142,7 +142,7 @@ impl Launcher {
         }
         self.play_as(Player::Offline(name));
         if !matches!(self.sign_in_state, Some(SignInState::Done(Err(_)))) {
-            self.servers.text(Field::OfflineName).clear();
+            self.servers.text(Field::OfflineName).set(String::new());
         }
     }
 
