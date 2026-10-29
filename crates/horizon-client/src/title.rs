@@ -71,6 +71,7 @@ pub struct WorldEntry {
     pub name: String,
     pub creative: bool,
     pub hardcore: bool,
+    pub game_mode: i32,
     pub modified: std::time::SystemTime,
     pub commands: bool,
     pub version: String,
@@ -204,11 +205,16 @@ pub fn list_worlds(saves: &Path) -> Vec<WorldEntry> {
             };
             let hardcore = level.hardcore
                 || matches!(data.get("hardcore"), Some(horizon_world::nbt::Tag::Byte(v)) if *v != 0);
+            let game_mode = match data.get("GameType") {
+                Some(horizon_world::nbt::Tag::Int(g)) => *g,
+                _ => level.game_mode,
+            };
             Some(WorldEntry {
                 folder: e.file_name().to_string_lossy().into_owned(),
                 name: level.name,
                 creative: level.creative,
                 hardcore,
+                game_mode,
                 modified,
                 commands: matches!(data.get("allowCommands"), Some(horizon_world::nbt::Tag::Byte(v)) if *v != 0),
                 version: data.get("Version").and_then(|v| v.get("Name"))
@@ -1072,12 +1078,30 @@ impl Title {
                     let mode_text = if world.hardcore {
                         Text::colored(
                             lang::get_or("gameMode.hardcore", "Hardcore Mode"),
-                            crate::text::RED,
+                            0xFF0000,
                         )
-                    } else if world.creative {
-                        Text::literal(lang::get_or("gameMode.creative", "Creative Mode"))
                     } else {
-                        Text::literal(lang::get_or("gameMode.survival", "Survival Mode"))
+                        const MODES: [&str; 4] = ["survival", "creative", "adventure", "spectator"];
+                        let key = if world.creative {
+                            "gameMode.creative"
+                        } else {
+                            MODES
+                                .get(world.game_mode as usize)
+                                .map(|m| *m)
+                                .unwrap_or("survival")
+                        };
+                        let fallback = match key {
+                            "creative" | "gameMode.creative" => "Creative Mode",
+                            "adventure" => "Adventure Mode",
+                            "spectator" => "Spectator Mode",
+                            _ => "Survival Mode",
+                        };
+                        let lang_key = if key.starts_with("gameMode.") {
+                            key.to_string()
+                        } else {
+                            format!("gameMode.{key}")
+                        };
+                        Text::literal(lang::get_or(&lang_key, fallback))
                     };
                     let commands = if world.commands {
                         format!(", {}", lang::get_or("selectWorld.commands", "Commands"))

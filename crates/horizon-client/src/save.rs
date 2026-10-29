@@ -3248,7 +3248,6 @@ impl Level {
             ("version", Tag::Int(19133)),
             ("LevelName", string(&self.name)),
             ("GameType", Tag::Int(self.mode())),
-            ("hardcore", Tag::Byte(i8::from(self.hardcore))),
             ("Time", Tag::Long(self.time)),
             ("LastPlayed", Tag::Long(now)),
             (
