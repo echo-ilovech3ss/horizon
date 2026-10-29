@@ -2310,17 +2310,17 @@ mod daylight_burn_tests {
     #[test]
     fn zombie_horse_burns_in_day_while_skeleton_horse_and_horse_do_not() {
         assert!(
-            species::def(Species::ZombieHorse)
+            crate::mobs::species::def(Species::ZombieHorse)
                 .flags(false)
                 .burns_in_day
         );
         assert!(
-            !species::def(Species::SkeletonHorse)
+            !crate::mobs::species::def(Species::SkeletonHorse)
                 .flags(false)
                 .burns_in_day
         );
         assert!(
-            !species::def(Species::Horse)
+            !crate::mobs::species::def(Species::Horse)
                 .flags(false)
                 .burns_in_day
         );
