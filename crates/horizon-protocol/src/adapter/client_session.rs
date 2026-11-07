@@ -343,6 +343,7 @@ impl ClientSession {
         mut payload: Vec<u8>,
     ) -> Result<Option<Vec<u8>>> {
         let v = self.version;
+        // center is 3x f64 = 24 bytes, always first in the pinned layout — the radius field follows it at offset 24.
         let radius = if (state, id) == (State::Play, packet_ids::play::clientbound::EXPLODE)
             && payload.len() >= 28
         {
